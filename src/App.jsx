@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
+import ParticionesEstaticasFijas from "./logic/TamanioFijo";
 
 function App() {
   const ramMB = 16;
   const ramKB = ramMB * 1024;
   const ramB = ramKB * 1024;
 
-  const [tipoParticion, setTipoParticion] = useState("");
+  const [logicaParticion, setLogicaParticion] = useState(null);
   const [tiposAjustes, setTiposAjustes] = useState(["Primer Ajuste"]);
   const [
     deshabilitarAlgoritmosDeAsignacion,
@@ -71,18 +72,70 @@ function App() {
       memUsar: 209465,
       tamKiB: 204.55,
     },
+    {
+      pid: "P6",
+      nombre: "p6",
+      tamDisco: 3_800_767,
+      tamCodigo: 525_000,
+      tamDatosInic: 3224000,
+      tamDatosSinInic: 51000,
+      memInicial: 3800000,
+      memUsar: 3996608,
+      tamKiB: 3902.94,
+    },
+    {
+      pid: "P7",
+      nombre: "p7",
+      tamDisco: 1589767,
+      tamCodigo: 590000,
+      tamDatosInic: 974000,
+      tamDatosSinInic: 25000,
+      memInicial: 1589000,
+      memUsar: 1785608,
+      tamKiB: 1743.76,
+    },
+    {
+      pid: "P8",
+      nombre: "p8",
+      tamDisco: 2500767,
+      tamCodigo: 349000,
+      tamDatosInic: 2150000,
+      tamDatosSinInic: 1000,
+      memInicial: 2500000,
+      memUsar: 2696608,
+      tamKiB: 2633.41,
+    },
   ]);
-  const [proceso, setProceso] = useState(programas[0]);
+  const SOInfo = {
+    pid: "SO",
+    nombre: "Sistema Operativo",
+    tamDisco: 0,
+    tamCodigo: 0,
+    tamDatosInic: 0,
+    tamDatosSinInic: 0,
+    memInicial: 0,
+    memUsar: 0,
+    tamKiB: 1024,
+  };
+  const [programaACargar, setProgramaACargar] = useState(programas[0]);
   const [procesosEnPila, setProcesosEnPila] = useState([]);
   const [posicionDeProcesoADetener, setPosicionDeProcesoADetener] =
     useState(undefined);
 
+  useEffect(() => {
+    const nuevaLogicaParticion = new ParticionesEstaticasFijas(ramB, 16);
+    nuevaLogicaParticion.asignarEspacioPrograma(SOInfo);
+    setLogicaParticion(nuevaLogicaParticion);
+  }, []);
+
   const handleSelectTipoParticion = (event) => {
     if (event.target !== undefined) {
-      setTipoParticion(event.target.value);
       if (event.target.value == "estatica-fijo") {
         setTiposAjustes(["Primer Ajuste"]);
         setDeshabilitarAlgoritmosDeAsignacion(true);
+        const nuevaLogicaParticion = new ParticionesEstaticasFijas(ramB, 16);
+        nuevaLogicaParticion.asignarEspacioPrograma(SOInfo);
+        setLogicaParticion(nuevaLogicaParticion);
       } else {
         setTiposAjustes(["Primer Ajuste", "Peor Ajuste", "Mejor Ajuste"]);
         setDeshabilitarAlgoritmosDeAsignacion(false);
@@ -96,19 +149,28 @@ function App() {
   };
 
   const handleSelectProceso = (event) => {
-    const selectedPid = event.target.value;
-    const selectedPrograma = programas.find(
-      (programa) => programa.pid === selectedPid
-    );
-    setProceso(selectedPrograma);
+    setProgramaACargar(programas[event.target.value]);
   };
-  const guardarProcesoEnPila = () => {
-    setProcesosEnPila([...procesosEnPila, proceso]);
+  const guardarProceso = () => {
+    try {
+      if (logicaParticion) {
+        logicaParticion.asignarEspacioPrograma(programaACargar);
+        setProcesosEnPila(logicaParticion.obtenerProgramasEnMemoria());
+      }
+    } catch (error) {
+      alert(error);
+    }
   };
 
-  const eliminarProcesoDePila = () => {
-    if (posicionDeProcesoADetener !== undefined)
-      setProcesosEnPila(procesosEnPila.pop(posicionDeProcesoADetener));
+  const eliminarProceso = () => {
+    if (posicionDeProcesoADetener !== undefined) {
+      logicaParticion.detenerProceso(posicionDeProcesoADetener);
+      setProcesosEnPila(
+        logicaParticion.obtenerProgramasEnMemoria().filter((val) => {
+          return val !== null && val?.nombre !== "Sistema Operativo";
+        })
+      );
+    }
   };
   return (
     <>
@@ -206,9 +268,9 @@ function App() {
         className="form-select form-select-sm"
         onChange={handleSelectProceso}
       >
-        {programas.map((programa) => {
+        {programas.map((programa, index) => {
           return (
-            <option key={programa.pid} value={programa.pid}>
+            <option key={programa.pid} value={index}>
               {programa.nombre}
             </option>
           );
@@ -218,7 +280,7 @@ function App() {
       <button
         type="button"
         className="btn btn-primary"
-        onClick={guardarProcesoEnPila}
+        onClick={guardarProceso}
       >
         Agregar
       </button>
@@ -228,23 +290,25 @@ function App() {
       <select
         className="form-select form-select-sm"
         onChange={(event) => {
-          setPosicionDeProcesoADetener(event.target.value);
+          setPosicionDeProcesoADetener(Number(event.target.value));
         }}
         disabled={procesosEnPila.length === 0}
       >
+        <option selected>---</option>
         {procesosEnPila.map((programa, index) => {
-          return (
-            <option key={index} value={index}>
-              {programa.nombre}
-            </option>
-          );
+          if (programa !== null && programa?.nombre !== "Sistema Operativo")
+            return (
+              <option key={index} value={index}>
+                {programa.nombre}
+              </option>
+            );
         })}
       </select>
       <br />
       <button
         type="button"
         className="btn btn-secondary"
-        onClick={eliminarProcesoDePila}
+        onClick={eliminarProceso}
         disabled={procesosEnPila.length === 0}
       >
         Quitar
