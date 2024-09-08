@@ -153,10 +153,8 @@ function App() {
   };
   const guardarProceso = () => {
     try {
-      if (logicaParticion) {
-        logicaParticion.asignarEspacioPrograma(programaACargar);
-        setProcesosEnPila(logicaParticion.obtenerProgramasEnMemoria());
-      }
+      logicaParticion.asignarEspacioPrograma(programaACargar);
+      setProcesosEnPila(logicaParticion.obtenerProgramasEnMemoria());
     } catch (error) {
       alert(error);
     }
@@ -165,11 +163,13 @@ function App() {
   const eliminarProceso = () => {
     if (posicionDeProcesoADetener !== undefined) {
       logicaParticion.detenerProceso(posicionDeProcesoADetener);
+      let mensaje = `Se eliminó el proceso #${posicionDeProcesoADetener} con nombre ${procesosEnPila[posicionDeProcesoADetener].nombre}`;
       setProcesosEnPila(
         logicaParticion.obtenerProgramasEnMemoria().filter((val) => {
           return val !== null && val?.nombre !== "Sistema Operativo";
         })
       );
+      alert(mensaje);
     }
   };
   return (
@@ -263,56 +263,60 @@ function App() {
         </tbody>
       </table>
       <br />
-      <label>Seleccione un proceso</label>
-      <select
-        className="form-select form-select-sm"
-        onChange={handleSelectProceso}
-      >
-        {programas.map((programa, index) => {
-          return (
-            <option key={programa.pid} value={index}>
-              {programa.nombre}
-            </option>
-          );
-        })}
-      </select>
-      <br />
-      <button
-        type="button"
-        className="btn btn-primary"
-        onClick={guardarProceso}
-      >
-        Agregar
-      </button>
-      <br />
-      <br />
-      <label>Seleccione el proceso a quitar de la pila</label>
-      <select
-        className="form-select form-select-sm"
-        onChange={(event) => {
-          setPosicionDeProcesoADetener(Number(event.target.value));
-        }}
-        disabled={procesosEnPila.length === 0}
-      >
-        <option selected>---</option>
-        {procesosEnPila.map((programa, index) => {
-          if (programa !== null && programa?.nombre !== "Sistema Operativo")
-            return (
-              <option key={index} value={index}>
-                {programa.nombre}
-              </option>
-            );
-        })}
-      </select>
-      <br />
-      <button
-        type="button"
-        className="btn btn-secondary"
-        onClick={eliminarProceso}
-        disabled={procesosEnPila.length === 0}
-      >
-        Quitar
-      </button>
+      <div className="row row-cols-2">
+        <div className="col">
+          <label>Seleccione un proceso</label>
+          <select
+            className="form-select form-select-sm"
+            onChange={handleSelectProceso}
+          >
+            {programas.map((programa, index) => {
+              return (
+                <option key={programa.pid} value={index}>
+                  {programa.nombre}
+                </option>
+              );
+            })}
+          </select>
+          <br />
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={guardarProceso}
+          >
+            Agregar
+          </button>
+        </div>
+        <div className="col">
+          <label>Seleccione el proceso a quitar de la pila</label>
+          <select
+            className="form-select form-select-sm"
+            onChange={(event) => {
+              setPosicionDeProcesoADetener(Number(event.target.value));
+            }}
+            disabled={procesosEnPila.length === 0}
+          >
+            <option>---</option>
+            {procesosEnPila.map((programa, index) => {
+              if (programa !== null && programa?.nombre !== "Sistema Operativo")
+                return (
+                  <option key={index} value={index}>
+                    {programa.nombre}
+                  </option>
+                );
+            })}
+          </select>
+          <br />
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={eliminarProceso}
+            disabled={procesosEnPila.length === 0}
+          >
+            Quitar
+          </button>
+        </div>
+      </div>
     </>
   );
 }
