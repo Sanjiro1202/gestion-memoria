@@ -1,0 +1,28 @@
+.memoria {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 300px;
+  }
+  
+  .particion {
+    border: 1px solid #000;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  
+  .estado {
+    margin-top: 5px;
+    padding: 5px;
+  }
+  
+  .ocupado {
+    background-color: #ffcccb;
+    color: #000;
+  }
+  
+  .libre {
+    background-color: #d4edda;
+    color: #000;
+  }
+  

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import "./App.css";
+import "./styles/App.css";
+import "./styles/Memoria.css"
 import ParticionesEstaticasFijas from "./logic/TamanioFijo";
+import ParticionEstatica from "./components/particionesEstaticas";
 
 function App() {
   const ramMB = 16;
@@ -80,7 +82,7 @@ function App() {
       tamDatosInic: 3224000,
       tamDatosSinInic: 51000,
       memInicial: 3800000,
-      memUsar: 3996608,
+      memUsar: 3996600008,
       tamKiB: 3902.94,
     },
     {
@@ -91,7 +93,7 @@ function App() {
       tamDatosInic: 974000,
       tamDatosSinInic: 25000,
       memInicial: 1589000,
-      memUsar: 1785608,
+      memUsar: 17856228,
       tamKiB: 1743.76,
     },
     {
@@ -102,7 +104,7 @@ function App() {
       tamDatosInic: 2150000,
       tamDatosSinInic: 1000,
       memInicial: 2500000,
-      memUsar: 2696608,
+      memUsar: 26966228,
       tamKiB: 2633.41,
     },
   ]);
@@ -121,6 +123,28 @@ function App() {
   const [procesosEnPila, setProcesosEnPila] = useState([]);
   const [posicionDeProcesoADetener, setPosicionDeProcesoADetener] =
     useState(undefined);
+  const [tipoParticion, setTipoParticion] = useState('');
+
+  const handleSelectTipoParticion = (event) => {
+    setTipoParticion(event.target.value); // Actualiza el tipo de partición seleccionado
+  };
+
+  // Función que renderiza el componente de partición correspondiente
+  const renderParticionComponent = () => {
+    if(parseInt(tipoParticion)==0) {
+        return <ParticionEstatica memoriaTotal={ramB} numParticiones={16} procesos={programas} />;
+    }else if(parseInt(tipoParticion)==1){
+      console.log(1)
+    }else if(parseInt(tipoParticion)==2){
+      console.log(2)
+    }else if(parseInt(tipoParticion)==3){
+      console.log(3)
+    }else if(parseInt(tipoParticion)==4){
+      console.log(4)
+    }else{
+      console.log("default")
+    }
+  };
 
   useEffect(() => {
     const nuevaLogicaParticion = new ParticionesEstaticasFijas(ramB, 16);
@@ -128,25 +152,6 @@ function App() {
     setLogicaParticion(nuevaLogicaParticion);
   }, []);
 
-  const handleSelectTipoParticion = (event) => {
-    if (event.target !== undefined) {
-      if (event.target.value == "estatica-fijo") {
-        setTiposAjustes(["Primer Ajuste"]);
-        setDeshabilitarAlgoritmosDeAsignacion(true);
-        const nuevaLogicaParticion = new ParticionesEstaticasFijas(ramB, 16);
-        nuevaLogicaParticion.asignarEspacioPrograma(SOInfo);
-        setLogicaParticion(nuevaLogicaParticion);
-      } else {
-        setTiposAjustes(["Primer Ajuste", "Peor Ajuste", "Mejor Ajuste"]);
-        setDeshabilitarAlgoritmosDeAsignacion(false);
-      }
-    }
-  };
-  const handleSelectAlgoritmoAsignacion = (event) => {
-    if (event.target !== undefined) {
-      setAlgoritmoDeAsignacion(event.target.value);
-    }
-  };
 
   const handleSelectProceso = (event) => {
     setProgramaACargar(programas[event.target.value]);
@@ -199,16 +204,19 @@ function App() {
         aria-label="Disabled select example"
         onChange={handleSelectTipoParticion}
       >
-        <option value="estatica-fijo">
+        <option value="" selected>
+          Seleccione una opción
+        </option>
+        <option value="0">
           Particiones estáticas de tamaño fijo
         </option>
-        <option value="estatica-variable">
+        <option value="1">
           Particiones estáticas de tamaño variable
         </option>
-        <option value="dinamica-sin-compactacion">
+        <option value="2">
           Particiones dinámicas sin compactación
         </option>
-        <option value="dinamica-con-compactacion">
+        <option value="3">
           Particiones dinámicas con compactación
         </option>
       </select>
@@ -218,7 +226,7 @@ function App() {
         className="form-select"
         aria-label="Disabled select example"
         disabled={deshabilitarAlgoritmosDeAsignacion}
-        onChange={handleSelectAlgoritmoAsignacion}
+        
       >
         {tiposAjustes.map((ajuste, key) => {
           return (
@@ -316,6 +324,10 @@ function App() {
             Quitar
           </button>
         </div>
+      </div>
+      <div>
+        <h1>Emulación de Partición Estática Fija</h1>
+        {renderParticionComponent()}
       </div>
     </>
   );
