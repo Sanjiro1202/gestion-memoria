@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react";
 import "./styles/App.css";
 import "./styles/Memoria.css"
-import ParticionesEstaticasFijas from "./logic/TamanioFijo";
 import ParticionEstatica from "./components/particionesEstaticas";
+import ParticionEstaticaVariable from "./components/particionesEstaticasVariables";
 
 function App() {
   const ramMB = 16;
   const ramKB = ramMB * 1024;
   const ramB = ramKB * 1024;
 
-  const [logicaParticion, setLogicaParticion] = useState(null);
-  const [tiposAjustes, setTiposAjustes] = useState(["Primer Ajuste"]);
+  //const [logicaParticion, setLogicaParticion] = useState(null);
+  //const [tiposAjustes, setTiposAjustes] = useState(["Primer Ajuste"]);
   const [
     deshabilitarAlgoritmosDeAsignacion,
     setDeshabilitarAlgoritmosDeAsignacion,
   ] = useState(true);
-  const [algoritmoDeAsignacion, setAlgoritmoDeAsignacion] = useState(
-    tiposAjustes[0]
-  );
+  const [algoritmoDeAsignacion, setAlgoritmoDeAsignacion] = useState(0);
+
+  const particionesVariables = [1024,256,256,512,512,512,1024,2048,2048,4096,4096];
   const [programas, setProgramas] = useState([
     {
       pid: "P1",
@@ -82,7 +82,7 @@ function App() {
       tamDatosInic: 3224000,
       tamDatosSinInic: 51000,
       memInicial: 3800000,
-      memUsar: 3996600008,
+      memUsar: 3996608,
       tamKiB: 3902.94,
     },
     {
@@ -104,7 +104,7 @@ function App() {
       tamDatosInic: 2150000,
       tamDatosSinInic: 1000,
       memInicial: 2500000,
-      memUsar: 26966228,
+      memUsar: 23696228,
       tamKiB: 2633.41,
     },
   ]);
@@ -116,25 +116,34 @@ function App() {
     tamDatosInic: 0,
     tamDatosSinInic: 0,
     memInicial: 0,
-    memUsar: 0,
+    memUsar: 1048576,
     tamKiB: 1024,
   };
-  const [programaACargar, setProgramaACargar] = useState(programas[0]);
-  const [procesosEnPila, setProcesosEnPila] = useState([]);
-  const [posicionDeProcesoADetener, setPosicionDeProcesoADetener] =
-    useState(undefined);
+  const [programaACargar, setProgramaACargar] = useState([SOInfo]);
+  //const [procesosEnPila, setProcesosEnPila] = useState([]);
+  //const [posicionDeProcesoADetener, setPosicionDeProcesoADetener] = useState(undefined);
   const [tipoParticion, setTipoParticion] = useState('');
 
+  const handleSelectTipoAlgoritmo = (event) => {
+    setAlgoritmoDeAsignacion(event.target.value);
+    console.log("algoritmo: " + algoritmoDeAsignacion)
+  };
+
   const handleSelectTipoParticion = (event) => {
-    setTipoParticion(event.target.value); // Actualiza el tipo de partición seleccionado
+    setDeshabilitarAlgoritmosDeAsignacion(true)
+    if(event.target.value == 1){
+      setDeshabilitarAlgoritmosDeAsignacion(false)
+    }
+    setTipoParticion(event.target.value);
+    setProgramaACargar([SOInfo]) // Actualiza el tipo de partición seleccionado
   };
 
   // Función que renderiza el componente de partición correspondiente
-  const renderParticionComponent = () => {
+  const Particiones = ({procesos}) => {
     if(parseInt(tipoParticion)==0) {
-        return <ParticionEstatica memoriaTotal={ramB} numParticiones={16} procesos={programas} />;
+      return <ParticionEstatica memoriaTotal={ramB} numParticiones={16} procesos={procesos} />;
     }else if(parseInt(tipoParticion)==1){
-      console.log(1)
+      return <ParticionEstaticaVariable memoriaTotal={ramB} particionesTamano={particionesVariables.map(numero => numero*1024)} procesos={procesos} algoritmo={algoritmoDeAsignacion}/>;
     }else if(parseInt(tipoParticion)==2){
       console.log(2)
     }else if(parseInt(tipoParticion)==3){
@@ -146,37 +155,26 @@ function App() {
     }
   };
 
-  useEffect(() => {
+  /*useEffect(() => {
     const nuevaLogicaParticion = new ParticionesEstaticasFijas(ramB, 16);
     nuevaLogicaParticion.asignarEspacioPrograma(SOInfo);
     setLogicaParticion(nuevaLogicaParticion);
-  }, []);
+  }, []);*/
 
-
-  const handleSelectProceso = (event) => {
-    setProgramaACargar(programas[event.target.value]);
-  };
-  const guardarProceso = () => {
-    try {
-      logicaParticion.asignarEspacioPrograma(programaACargar);
-      setProcesosEnPila(logicaParticion.obtenerProgramasEnMemoria());
-    } catch (error) {
-      alert(error);
-    }
+  const agregarProceso = () => {
+    const proceso = document.getElementById('seleccionar-proceso').value;
+    const nuevoProceso = programas[proceso]
+    setProgramaACargar([...programaACargar, nuevoProceso]);
   };
 
   const eliminarProceso = () => {
-    if (posicionDeProcesoADetener !== undefined) {
-      logicaParticion.detenerProceso(posicionDeProcesoADetener);
-      let mensaje = `Se eliminó el proceso #${posicionDeProcesoADetener} con nombre ${procesosEnPila[posicionDeProcesoADetener].nombre}`;
-      setProcesosEnPila(
-        logicaParticion.obtenerProgramasEnMemoria().filter((val) => {
-          return val !== null && val?.nombre !== "Sistema Operativo";
-        })
-      );
-      alert(mensaje);
-    }
+    const posicionDeProcesoAEliminar = document.getElementById('eliminar-proceso').value;
+    const procesosActuales = programaACargar;
+    const nuevosProcesos =  procesosActuales.filter(cadaProceso => cadaProceso != procesosActuales[posicionDeProcesoAEliminar])
+    setProgramaACargar(nuevosProcesos)
+    console.log(nuevosProcesos)
   };
+
   return (
     <>
       <h1>Gestión de memoria</h1>
@@ -204,7 +202,7 @@ function App() {
         aria-label="Disabled select example"
         onChange={handleSelectTipoParticion}
       >
-        <option value="" selected>
+        <option value="" defaultValue='true'>
           Seleccione una opción
         </option>
         <option value="0">
@@ -226,15 +224,17 @@ function App() {
         className="form-select"
         aria-label="Disabled select example"
         disabled={deshabilitarAlgoritmosDeAsignacion}
-        
+        onChange={handleSelectTipoAlgoritmo}
       >
-        {tiposAjustes.map((ajuste, key) => {
-          return (
-            <option key={key} value={ajuste}>
-              {ajuste}
-            </option>
-          );
-        })}
+        <option value="0">
+          Primer ajuste
+        </option>
+        <option value="1">
+          Peor ajuste
+        </option>
+        <option value="2">
+          Mejor ajuste
+        </option>
       </select>
       <br />
       <h2>Programas instalados en el sistema</h2>
@@ -275,8 +275,7 @@ function App() {
         <div className="col">
           <label>Seleccione un proceso</label>
           <select
-            className="form-select form-select-sm"
-            onChange={handleSelectProceso}
+            className="form-select form-select-sm" id="seleccionar-proceso"
           >
             {programas.map((programa, index) => {
               return (
@@ -290,7 +289,7 @@ function App() {
           <button
             type="button"
             className="btn btn-primary"
-            onClick={guardarProceso}
+            onClick={agregarProceso}
           >
             Agregar
           </button>
@@ -299,19 +298,16 @@ function App() {
           <label>Seleccione el proceso a quitar de la pila</label>
           <select
             className="form-select form-select-sm"
-            onChange={(event) => {
-              setPosicionDeProcesoADetener(Number(event.target.value));
-            }}
-            disabled={procesosEnPila.length === 0}
+            disabled={programaACargar.length === 1}
+            id="eliminar-proceso"
           >
             <option>---</option>
-            {procesosEnPila.map((programa, index) => {
-              if (programa !== null && programa?.nombre !== "Sistema Operativo")
-                return (
-                  <option key={index} value={index}>
-                    {programa.nombre}
-                  </option>
-                );
+            {[...programaACargar.filter(proceso => proceso != programaACargar[0])].map((programa, index) => {
+              return (
+                <option key={programa.pid} value={index}>
+                  {programa.nombre}
+                </option>
+              );
             })}
           </select>
           <br />
@@ -319,15 +315,15 @@ function App() {
             type="button"
             className="btn btn-secondary"
             onClick={eliminarProceso}
-            disabled={procesosEnPila.length === 0}
+            disabled={programaACargar.length === 1}
           >
             Quitar
           </button>
         </div>
       </div>
       <div>
-        <h1>Emulación de Partición Estática Fija</h1>
-        {renderParticionComponent()}
+        
+        <Particiones procesos={programaACargar}/>
       </div>
     </>
   );

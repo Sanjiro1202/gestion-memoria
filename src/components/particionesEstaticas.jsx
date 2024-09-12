@@ -5,7 +5,6 @@ import '../styles/Memoria.css'; // Archivo CSS opcional para estilos
 const ParticionEstatica = ({ memoriaTotal, numParticiones, procesos }) => {
   const [particiones, setParticiones] = useState([]);
   const [procesosAsignados, setProcesosAsignados] = useState(false); // Marcador de cambios
-  let msg = "Los siguientes procesos exceden memoria y no han sido asignados en un espacio en memoria: \n";
 
   // Divide la memoria en particiones fijas
   useEffect(() => {
@@ -22,10 +21,9 @@ const ParticionEstatica = ({ memoriaTotal, numParticiones, procesos }) => {
 
   // Asigna los procesos a las particiones disponibles cuando las particiones han sido inicializadas
   useEffect(() => {
+    let msg = "Los siguientes procesos exceden memoria y no han sido asignados en un espacio en memoria: \n";
     if (!procesosAsignados && particiones.length > 0 && procesos && procesos.length > 0) {
       const nuevasParticiones = [...particiones];
-      console.log(nuevasParticiones);
-
       // Asigna los procesos a las particiones
       procesos.forEach(proceso => {
         for (let i = 0; i < nuevasParticiones.length; i++) {
@@ -33,40 +31,38 @@ const ParticionEstatica = ({ memoriaTotal, numParticiones, procesos }) => {
             nuevasParticiones[i].proceso = proceso;
             break;
           } else if (!nuevasParticiones[i].proceso && nuevasParticiones[i].tamano <= proceso.memUsar) {
-            msg += proceso.nombre + "\n";
+            msg += `${proceso.nombre} (${proceso.memUsar}B)\n`;
+            Swal.fire({
+              icon: 'warning',
+              title: 'Advertencia',
+              text: msg,
+              confirmButtonText: 'Entendido'
+            });
+            msg = "Los siguientes procesos exceden memoria y no han sido asignados en un espacio en memoria: \n";
             break;
           }
         }
       });
 
-      // Muestra la alerta con SweetAlert
-      if (msg !== "Los siguientes procesos exceden memoria y no han sido asignados en un espacio en memoria: \n") {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Advertencia',
-          text: msg,
-          confirmButtonText: 'Entendido'
-        });
-      }
-
       setParticiones(nuevasParticiones); // Actualiza las particiones con los procesos asignados
       setProcesosAsignados(true); // Marcar como asignados para evitar el bucle
     }
-  }, [procesos, particiones, procesosAsignados]);
+  }, [particiones, procesosAsignados]);
 
   return (
     <div className="ParticionEstatica">
-      <div>{particiones.length > 0 ? console.log(particiones) : "No hay particiones disponibles"}</div>
-      {particiones.map((particion, index) => (
+      <div className='PE2'>
+      {particiones.toReversed().map((particion, index) => (
         <div key={index} className="particion">
-          <div className="tamano">Partición {index + 1}: {particion.tamano}KB</div>
+          <div className="tamano">Partición {particiones.length - index}: {particion.tamano}B</div>
           <div className={`estado ${particion.proceso ? 'ocupado' : 'libre'}`}>
             {particion.proceso
-              ? `Proceso: ${particion.proceso.nombre} (${particion.proceso.memUsar}KB)`
+              ? `Proceso: ${particion.proceso.nombre} (${particion.proceso.memUsar}B)`
               : 'Libre'}
           </div>
         </div>
       ))}
+      </div>
     </div>
   );
 };

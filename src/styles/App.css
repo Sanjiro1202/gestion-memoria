@@ -2,3 +2,11 @@
   padding: 2rem;
   text-align: center;
 }
+.ParticionEstatica{
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+.PE2{
+  width: 50%;
+}
