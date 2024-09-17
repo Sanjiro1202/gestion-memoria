@@ -12,10 +12,9 @@ function App() {
     deshabilitarAlgoritmosDeAsignacion,
     setDeshabilitarAlgoritmosDeAsignacion,
   ] = useState(true);
-  const [algoritmoDeAsignacion, setAlgoritmoDeAsignacion] = useState(0);
 
-  const particionesVariables = [1024,256,256,512,512,512,1024,2048,2048,4096,4096];
-  const [programas, setProgramas] = useState([
+  const [algoritmoDeAsignacion, setAlgoritmoDeAsignacion] = useState(0);
+  const programas = [
     {
       pid: "P1",
       nombre: "Notepad",
@@ -104,7 +103,8 @@ function App() {
       memUsar: 23696228,
       tamKiB: 2633.41,
     },
-  ]);
+  ];
+
   const SOInfo = {
     pid: "SO",
     nombre: "Sistema Operativo",
@@ -116,13 +116,13 @@ function App() {
     memUsar: 1048576,
     tamKiB: 1024,
   };
+
   const [programaACargar, setProgramaACargar] = useState([SOInfo, 1]);
 
   const [tipoParticion, setTipoParticion] = useState('');
 
   const handleSelectTipoAlgoritmo = (event) => {
     setAlgoritmoDeAsignacion(event.target.value);
-    console.log("algoritmo: " + algoritmoDeAsignacion)
   };
 
   const handleSelectTipoParticion = (event) => {
@@ -131,31 +131,9 @@ function App() {
     if(event.target.value == 1){
       setDeshabilitarAlgoritmosDeAsignacion(false)
     }
-    setTipoParticion(event.target.value); // Actualiza el tipo de partición seleccionado
+    setTipoParticion(event.target.value); 
   };
 
-  // Función que renderiza el componente de partición correspondiente
-  /*const Particiones = ({proceso, tipoParticion}) => {
-    return (
-      <div>
-          {parseInt(tipoParticion) === 0 && (
-              <ParticionEstatica memoriaTotal={ramB} numParticiones={16} procesos={proceso} />
-          )}
-          {parseInt(tipoParticion) === 1 && (
-              <ParticionEstaticaVariable memoriaTotal={ramB} particionesTamano={particionesVariables.map(numero => numero * 1024)} procesos={proceso} algoritmo={algoritmoDeAsignacion} />
-          )}
-          {parseInt(tipoParticion) === 2 && (
-              <ParticionDinamica memoriaTotal={ramB} proceso={proceso} tipoAlgoritmo={0} />
-          )}
-      </div>
-  );
-  };*/
-
-  /*useEffect(() => {
-    const nuevaLogicaParticion = new ParticionesEstaticasFijas(ramB, 16);
-    nuevaLogicaParticion.asignarEspacioPrograma(SOInfo);
-    setLogicaParticion(nuevaLogicaParticion);
-  }, []);*/
 
   const agregarProceso = () => {
     const proceso = document.getElementById('seleccionar-proceso').value;
@@ -171,23 +149,6 @@ function App() {
   return (
     <>
       <h1>Gestión de memoria</h1>
-      <h2>Características del Sistema</h2> <span>Ram instalada</span>
-      <table>
-        <thead>
-          <tr>
-            <th>MiB</th>
-            <th>KiB</th>
-            <th>Bytes</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{ramMB}</td>
-            <td>{ramKB}</td>
-            <td>{ramB}</td>
-          </tr>
-        </tbody>
-      </table>
       <br />
       <label>Seleccione el tipo de partición</label>
       <select
@@ -261,7 +222,7 @@ function App() {
         </tbody>
       </table>
       <br />
-      <div className="row row-cols-2">
+      <div>
         <div className="col">
           <label>Seleccione un proceso</label>
           <select
@@ -284,10 +245,10 @@ function App() {
             Agregar
           </button>
         </div>
-        {/* Aqui deberia ir la lista :b*/}
+        <br />  
       </div>
       <div>       
-        <Memoria procesoPorAsignar={programaACargar} tipoParticionPorDefecto={tipoParticion} />
+        <Memoria procesoPorAsignar={programaACargar} tipoParticionPorDefecto={tipoParticion} tipoAlgoritmo={algoritmoDeAsignacion}/>
       </div>
     </>
   );
