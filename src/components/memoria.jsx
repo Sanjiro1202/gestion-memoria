@@ -17,7 +17,7 @@ export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, ti
 
     const asignarProceso = (particionesActuales, proceso) => {
         let posicionParticion = 0;
-        if(tipoDeParticion === 1){
+        if(tipoDeParticion == 1){
             if(tipoAlgoritmo == 0){
                 posicionParticion = particionesDisponibles(particionesActuales);
             }
@@ -179,7 +179,7 @@ export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, ti
 
     useEffect(() => {
         if (tipoDeParticion == 0 || tipoDeParticion == 1) {
-            const tamanos = [1024, 256, 256, 512, 512, 512, 1024, 2048, 2048, 4096, 4096].map(tamano => tamano * 1024) // Tamaño de particiones en MB
+            const tamanos = [1024, 4096, 256, 256, 512, 512, 512, 1024, 2048, 2048, 4096].map(tamano => tamano * 1024) // Tamaño de particiones en MB
             const cantidad = 16 // Número de particiones
             const tamanoOCantidad = tipoDeParticion == 0 ? cantidad : tamanos
             const particionesGeneradas = !particiones.length
@@ -247,7 +247,7 @@ export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, ti
             particionUnificada.fin = particionesActuales[index + 1].fin;
             particionesActuales.splice(index, 2, particionUnificada)
         }
-        const memoriaDisponibleActual = memoriaDisponible + particionesActuales[index].tamano;
+        const memoriaDisponibleActual = memoriaDisponible + particionUnificada.tamano;
         setMemoriaDisponible(memoriaDisponibleActual)
         asignarParticiones(particionesActuales)
     };
