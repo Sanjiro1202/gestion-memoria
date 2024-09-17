@@ -25,4 +25,16 @@
     background-color: #d4edda;
     color: #000;
   }
+
+  .eliminar {
+    background-color: red;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+  
+  .eliminar:hover {
+    background-color: darkred;
+  }
   

@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
 import "./styles/App.css";
 import "./styles/Memoria.css"
-import ParticionEstatica from "./components/particionesEstaticas";
-import ParticionEstaticaVariable from "./components/particionesEstaticasVariables";
+import Memoria from "./components/memoria";
 
 function App() {
   const ramMB = 16;
   const ramKB = ramMB * 1024;
   const ramB = ramKB * 1024;
 
-  //const [logicaParticion, setLogicaParticion] = useState(null);
-  //const [tiposAjustes, setTiposAjustes] = useState(["Primer Ajuste"]);
   const [
     deshabilitarAlgoritmosDeAsignacion,
     setDeshabilitarAlgoritmosDeAsignacion,
@@ -77,8 +74,8 @@ function App() {
     {
       pid: "P6",
       nombre: "p6",
-      tamDisco: 3_800_767,
-      tamCodigo: 525_000,
+      tamDisco: 3800767,
+      tamCodigo: 525000,
       tamDatosInic: 3224000,
       tamDatosSinInic: 51000,
       memInicial: 3800000,
@@ -119,9 +116,8 @@ function App() {
     memUsar: 1048576,
     tamKiB: 1024,
   };
-  const [programaACargar, setProgramaACargar] = useState([SOInfo]);
-  //const [procesosEnPila, setProcesosEnPila] = useState([]);
-  //const [posicionDeProcesoADetener, setPosicionDeProcesoADetener] = useState(undefined);
+  const [programaACargar, setProgramaACargar] = useState([SOInfo, 1]);
+
   const [tipoParticion, setTipoParticion] = useState('');
 
   const handleSelectTipoAlgoritmo = (event) => {
@@ -134,26 +130,25 @@ function App() {
     if(event.target.value == 1){
       setDeshabilitarAlgoritmosDeAsignacion(false)
     }
-    setTipoParticion(event.target.value);
-    setProgramaACargar([SOInfo]) // Actualiza el tipo de partición seleccionado
+    setTipoParticion(event.target.value); // Actualiza el tipo de partición seleccionado
   };
 
   // Función que renderiza el componente de partición correspondiente
-  const Particiones = ({procesos}) => {
-    if(parseInt(tipoParticion)==0) {
-      return <ParticionEstatica memoriaTotal={ramB} numParticiones={16} procesos={procesos} />;
-    }else if(parseInt(tipoParticion)==1){
-      return <ParticionEstaticaVariable memoriaTotal={ramB} particionesTamano={particionesVariables.map(numero => numero*1024)} procesos={procesos} algoritmo={algoritmoDeAsignacion}/>;
-    }else if(parseInt(tipoParticion)==2){
-      console.log(2)
-    }else if(parseInt(tipoParticion)==3){
-      console.log(3)
-    }else if(parseInt(tipoParticion)==4){
-      console.log(4)
-    }else{
-      console.log("default")
-    }
-  };
+  /*const Particiones = ({proceso, tipoParticion}) => {
+    return (
+      <div>
+          {parseInt(tipoParticion) === 0 && (
+              <ParticionEstatica memoriaTotal={ramB} numParticiones={16} procesos={proceso} />
+          )}
+          {parseInt(tipoParticion) === 1 && (
+              <ParticionEstaticaVariable memoriaTotal={ramB} particionesTamano={particionesVariables.map(numero => numero * 1024)} procesos={proceso} algoritmo={algoritmoDeAsignacion} />
+          )}
+          {parseInt(tipoParticion) === 2 && (
+              <ParticionDinamica memoriaTotal={ramB} proceso={proceso} tipoAlgoritmo={0} />
+          )}
+      </div>
+  );
+  };*/
 
   /*useEffect(() => {
     const nuevaLogicaParticion = new ParticionesEstaticasFijas(ramB, 16);
@@ -163,17 +158,22 @@ function App() {
 
   const agregarProceso = () => {
     const proceso = document.getElementById('seleccionar-proceso').value;
-    const nuevoProceso = programas[proceso]
-    setProgramaACargar([...programaACargar, nuevoProceso]);
+    let nuevoProceso = programas[proceso]
+    nuevoProceso = nuevoProceso == programaACargar[0] 
+    ? nuevoProceso.pid == "SO" 
+      ? [nuevoProceso, programaACargar[1] + 1]
+      : [nuevoProceso, programaACargar[1]]
+    : [nuevoProceso, 1]
+    setProgramaACargar(nuevoProceso);
   };
 
-  const eliminarProceso = () => {
+  /*const eliminarProceso = () => {
     const posicionDeProcesoAEliminar = document.getElementById('eliminar-proceso').value;
     const procesosActuales = programaACargar;
     const nuevosProcesos =  procesosActuales.filter(cadaProceso => cadaProceso != procesosActuales[posicionDeProcesoAEliminar])
     setProgramaACargar(nuevosProcesos)
     console.log(nuevosProcesos)
-  };
+  };*/
 
   return (
     <>
@@ -202,10 +202,7 @@ function App() {
         aria-label="Disabled select example"
         onChange={handleSelectTipoParticion}
       >
-        <option value="" defaultValue='true'>
-          Seleccione una opción
-        </option>
-        <option value="0">
+        <option value="0" defaultValue="true">
           Particiones estáticas de tamaño fijo
         </option>
         <option value="1">
@@ -294,36 +291,10 @@ function App() {
             Agregar
           </button>
         </div>
-        <div className="col">
-          <label>Seleccione el proceso a quitar de la pila</label>
-          <select
-            className="form-select form-select-sm"
-            disabled={programaACargar.length === 1}
-            id="eliminar-proceso"
-          >
-            <option>---</option>
-            {[...programaACargar.filter(proceso => proceso != programaACargar[0])].map((programa, index) => {
-              return (
-                <option key={programa.pid} value={index}>
-                  {programa.nombre}
-                </option>
-              );
-            })}
-          </select>
-          <br />
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={eliminarProceso}
-            disabled={programaACargar.length === 1}
-          >
-            Quitar
-          </button>
-        </div>
+        {/* Aqui deberia ir la lista :b*/}
       </div>
-      <div>
-        
-        <Particiones procesos={programaACargar}/>
+      <div>       
+        <Memoria procesoPorAsignar={programaACargar} tipoParticionPorDefecto={tipoParticion} />
       </div>
     </>
   );
