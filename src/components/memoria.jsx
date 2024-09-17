@@ -173,6 +173,7 @@ export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, ti
     useEffect(() => {
         if (tipoParticionPorDefecto !== tipoDeParticion) {
             setTipoDeParticion(tipoParticionPorDefecto);
+            setMemoriaDisponible(memoriaTotal);
             setParticiones([])
         }
     }, [tipoParticionPorDefecto])
@@ -275,18 +276,25 @@ export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, ti
 
     return (
         <div>
-            <h3>
-                Partición de tipo {
-                    tipoDeParticion == 0 ? 'Estática Fija' :
-                        tipoDeParticion == 1 ? 'Estática Variable' :
-                            tipoDeParticion == 2 ? 'Dinámica Sin Compactación' :
-                                tipoDeParticion == 3 ? 'Dinámica Con Compactación' : ''
-                }
-            </h3>
-            <p>Memoria Total: {memoriaTotal}B</p>
-            <div className="particion-container">
-                {particiones.toReversed().map((particion, index) => (
-                    <div key={particiones.length - index} className="particion">
+        <h3>
+            Partición de tipo {
+                tipoDeParticion == 0 ? 'Estática Fija' :
+                    tipoDeParticion == 1 ? 'Estática Variable' :
+                        tipoDeParticion == 2 ? 'Dinámica Sin Compactación' :
+                            tipoDeParticion == 3 ? 'Dinámica Con Compactación' : ''
+            }
+        </h3>
+        <p>Memoria Total: {memoriaTotal}B</p>
+        <div className="particion-container">
+            {particiones.toReversed().map((particion, index) => {
+                const porcentajeUso = particion.proceso
+                    ? (particion.proceso.memUsar / particion.tamano) * 100
+                    : 0; // Si no hay proceso, no hay uso
+    
+                const porcentajeLibre = 100 - porcentajeUso; // Para mostrar el espacio libre restante
+    
+                return (
+                    <div key={particiones.length - index} className="particion mb-4">
                         <div>
                             Partición {particiones.length - index}: {particion.tamano}B (Inicio: {particion.inicio} - Fin: {particion.fin - 1})
                         </div>
@@ -294,27 +302,54 @@ export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, ti
                             {particion.proceso
                                 ? `Proceso: ${particion.proceso.nombre} (${particion.proceso.memUsar}B)`
                                 : 'Libre'}
-                            {index != particiones.length - 1 && particion.proceso
-                                ? <button className="eliminar" onClick={() => {
+    
+                            {index != particiones.length - 1 && particion.proceso &&
+                                <button className="eliminar btn btn-danger btn-sm ms-2" onClick={() => {
                                     if (tipoDeParticion == 0 || tipoDeParticion == 1) {
                                         return eliminarProceso(particiones.length - index - 1)
-                                    }
-                                    else {
+                                    } else {
                                         return tipoDeParticion == 2
                                             ? eliminarProcesoSinCompactacion(particiones.length - index - 1)
                                             : eliminarProcesoConCompactación(particiones.length - index - 1)
                                     }
-                                }
-                                }>
+                                }}>
                                     X
                                 </button>
-                                : ""
                             }
-
+                        </div>
+    
+                        {/* Barra de progreso que representa el tamaño sobrante */}
+                        <div className="mt-2">
+                            <div className="progress">
+                                <div
+                                    className={`progress-bar ${porcentajeUso === 100 ? 'bg-danger' : 'bg-success'}`}
+                                    role="progressbar"
+                                    style={{ width: `${porcentajeUso}%` }}
+                                    aria-valuenow={porcentajeUso}
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                >
+                                    {porcentajeUso.toFixed(2)}% usado
+                                </div>
+                                {porcentajeLibre > 0 && (
+                                    <div
+                                        className="progress-bar bg-info"
+                                        role="progressbar"
+                                        style={{ width: `${porcentajeLibre}%` }}
+                                        aria-valuenow={porcentajeLibre}
+                                        aria-valuemin="0"
+                                        aria-valuemax="100"
+                                    >
+                                        {porcentajeLibre.toFixed(2)}% libre
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                ))}
-            </div>
+                );
+            })}
         </div>
+    </div>
+    
     );
 }
