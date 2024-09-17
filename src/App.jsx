@@ -127,6 +127,7 @@ function App() {
 
   const handleSelectTipoParticion = (event) => {
     setDeshabilitarAlgoritmosDeAsignacion(true)
+    setProgramaACargar([SOInfo, 1])
     if(event.target.value == 1){
       setDeshabilitarAlgoritmosDeAsignacion(false)
     }
@@ -166,14 +167,6 @@ function App() {
     : [nuevoProceso, 1]
     setProgramaACargar(nuevoProceso);
   };
-
-  /*const eliminarProceso = () => {
-    const posicionDeProcesoAEliminar = document.getElementById('eliminar-proceso').value;
-    const procesosActuales = programaACargar;
-    const nuevosProcesos =  procesosActuales.filter(cadaProceso => cadaProceso != procesosActuales[posicionDeProcesoAEliminar])
-    setProgramaACargar(nuevosProcesos)
-    console.log(nuevosProcesos)
-  };*/
 
   return (
     <>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
 
-export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, tipoAlgoritmo = 0, tipoParticionPorDefecto = 0 }) {
+export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, tipoAlgoritmo = 0, tipoParticionPorDefecto }) {
     const [memoriaDisponible, setMemoriaDisponible] = useState(memoriaTotal);
-    const [procesoActualYaAsignado, setProcesoActualYaAsignado] = useState(false);
+    const [procesoActualYaAsignado, setProcesoActualYaAsignado] = useState(tipoParticionPorDefecto);
+    const [tipoDeParticion, setTipoDeParticion] = useState(0)
     const [proceso, setProceso] = useState();
     const [particiones, setParticiones] = useState([]);
 
@@ -20,7 +21,6 @@ export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, ti
         particionesActuales[posicionParticion].proceso = proceso;
         const memoriaDisponibleNueva = memoriaDisponible - proceso.memUsar;
         asignarParticiones(particionesActuales);
-        setProceso(procesoPorAsignar);
         return memoriaDisponibleNueva;
     }
 
@@ -106,42 +106,57 @@ export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, ti
     }
 
     useEffect(() => {
-        procesoPorAsignar !== proceso ? setProcesoActualYaAsignado(false) : null;
+        if ((JSON.stringify(procesoPorAsignar) !== JSON.stringify(proceso)) || (procesoPorAsignar[0] && procesoPorAsignar[0].pid == "SO")) {
+            setProceso(procesoPorAsignar);
+            setProcesoActualYaAsignado(false);
+        }
     }, [procesoPorAsignar])
 
     useEffect(() => {
-        if(!procesoActualYaAsignado){
-            if (tipoParticionPorDefecto == 0 || tipoParticionPorDefecto == 1) {
-                const tamanos = [1024, 256, 256, 512, 512, 512, 1024, 2048, 2048, 4096, 4096].map(tamano => tamano * (1024 ^ 2)) // Tamaño de particiones en MB
-                const cantidad = 16 // Número de particiones
-                const tamanoOCantidad = tipoParticionPorDefecto == 0 ? cantidad : tamanos
-                const particionesGeneradas = !particiones.length
-                    ? tipoParticionPorDefecto == 0
-                        ? generarParticionesEstaticasFijas(tamanoOCantidad) : generarParticionesEstaticasVariables(tamanoOCantidad)
-                    : [...particiones];
+        if (tipoParticionPorDefecto !== tipoDeParticion) {
+            setTipoDeParticion(tipoParticionPorDefecto);
+            setParticiones([])
+        }
+    }, [tipoParticionPorDefecto])
+
+    useEffect(() => {
+        if (tipoDeParticion == 0 || tipoDeParticion == 1) {
+            const tamanos = [1024, 256, 256, 512, 512, 512, 1024, 2048, 2048, 4096, 4096].map(tamano => tamano * (1024 ^ 2)) // Tamaño de particiones en MB
+            const cantidad = 16 // Número de particiones
+            const tamanoOCantidad = tipoDeParticion == 0 ? cantidad : tamanos
+            const particionesGeneradas = !particiones.length
+                ? tipoDeParticion == 0
+                    ? generarParticionesEstaticasFijas(tamanoOCantidad) : generarParticionesEstaticasVariables(tamanoOCantidad)
+                : [...particiones];
+            asignarParticiones(particionesGeneradas)
+            if (!procesoActualYaAsignado) {
                 if (existeEspacioEnMemoria(procesoPorAsignar[0]) && existeUnaParticionConSuficienteMemoria(particionesGeneradas, procesoPorAsignar[0])) {
                     const memoriaDisponibleNueva = asignarProceso(particionesGeneradas, procesoPorAsignar[0]);
                     asignarMemoriaDisponible(memoriaDisponibleNueva);
+                    marcarProcesoComoAsignado();
                 }
                 else {
                     const msg = "Los siguientes procesos exceden memoria y no han sido asignados en un espacio en memoria:"
                     mensajeDeError(procesoPorAsignar[0], msg);
                 }
             }
-            if (tipoParticionPorDefecto == 2 || tipoParticionPorDefecto == 3) {
+        }
+        if (tipoDeParticion == 2 || tipoDeParticion == 3) {
+            if (!procesoActualYaAsignado) {
                 const particionesGeneradas = generarParticionesDinamicas(procesoPorAsignar[0]);
+                asignarParticiones(particionesGeneradas)
                 if (existeEspacioEnMemoria(procesoPorAsignar[0])) {
                     const memoriaDisponibleNueva = asignarProceso(particionesGeneradas, procesoPorAsignar[0]);
                     asignarMemoriaDisponible(memoriaDisponibleNueva);
+                    marcarProcesoComoAsignado();
                 }
                 else {
                     const msg = "Los siguientes procesos exceden memoria y no han sido asignados en un espacio en memoria:"
                     mensajeDeError(procesoPorAsignar[0], msg);
                 }
             }
-            marcarProcesoComoAsignado();
         }
-    }, [tipoParticionPorDefecto, procesoPorAsignar, procesoActualYaAsignado])
+    }, [tipoDeParticion, procesoActualYaAsignado])
 
     const mensajeDeError = (procesoNoAsignado, msg) => {
         msg += `\n ${procesoNoAsignado.nombre} (${procesoNoAsignado.memUsar}B)\n`;
@@ -208,7 +223,7 @@ export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, ti
 
     return (
         <div>
-            <h3>Partición Dinámica ({tipoParticionPorDefecto == 2 ? 'Sin' : 'Con'} Compactación)</h3>
+            <h3>Partición Dinámica ({tipoDeParticion == 2 ? 'Sin' : 'Con'} Compactación)</h3>
             <p>Memoria Total: {memoriaTotal}B</p>
             <div className="particion-container">
                 {particiones.toReversed().map((particion, index) => (
@@ -222,11 +237,11 @@ export default function Memoria({ memoriaTotal = 16777216, procesoPorAsignar, ti
                                 : 'Libre'}
                             {index != particiones.length - 1 && particion.proceso
                                 ? <button className="eliminar" onClick={() => {
-                                    if (tipoParticionPorDefecto == 0 || tipoParticionPorDefecto == 1) {
+                                    if (tipoDeParticion == 0 || tipoDeParticion == 1) {
                                         return eliminarProceso(particiones.length - index - 1)
                                     }
                                     else {
-                                        return tipoParticionPorDefecto == 2
+                                        return tipoDeParticion == 2
                                             ? eliminarProcesoSinCompactacion(particiones.length - index - 1)
                                             : eliminarProcesoConCompactación(particiones.length - index - 1)
                                     }
